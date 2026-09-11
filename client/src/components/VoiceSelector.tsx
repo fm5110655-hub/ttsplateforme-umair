@@ -286,7 +286,7 @@ export const VoiceSelector: React.FC<VoiceSelectorProps> = ({
         <div className="flex items-center justify-between">
           <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
             <Globe className="w-4 h-4 text-emerald-400" />
-            <span>1. Select Country (ملک منتخب کریں)</span>
+            <span>1. Select Country & Accent</span>
           </label>
           <span className="text-[11px] font-medium text-emerald-400 bg-emerald-950/70 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
             <span>{currentFlag}</span>

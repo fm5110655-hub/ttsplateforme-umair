@@ -5,7 +5,8 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
-  FileText
+  FileText,
+  Zap
 } from "lucide-react";
 import {
   Voice,
@@ -20,23 +21,23 @@ import { AudioPlayer } from "../components/AudioPlayer";
 import { HistoryList } from "../components/HistoryList";
 
 const COUNTRY_SAMPLE_TEXTS: Record<string, string> = {
-  Pakistan: "السلام علیکم! یہ آواز بالکل ایک حقیقی اور قدرتی انسان کی طرح بات کرتی ہے، جس میں کسی قسم کا مصنوعی یا روبوٹک انداز نہیں ہے۔",
+  Pakistan: "Hello! This voice delivers warm, conversational, and authentic human speech without any robotic artifacts.",
   "United States": "Hello! This voice sounds completely authentic and human-grade, with natural breathing pauses and conversational clarity.",
   "United Kingdom": "Good day! This British accent provides warm, natural, human-like voice delivery without any robotic artifacts.",
-  India: "नमस्ते! यह आवाज़ बिल्कुल स्वाभाविक और असली इंसान जैसी सुनाई देती है, जिसमें कोई कृत्रिम या रोबोटिक प्रभाव नहीं है।",
-  "Saudi Arabia": "أهلاً وسهلاً! هذا الصوت يبدو طبيعياً وواقعياً تماماً كصوت بشري أصيل بجودة عالية.",
-  "United Arab Emirates": "مرحباً بكم! استمع إلى هذا الصوت الطبيعي الذي يحاكي النطق البشري بدقة ووضوح.",
+  India: "Welcome! This voice provides crystal-clear and authentic speech synthesis with studio clarity.",
+  "Saudi Arabia": "Welcome! Experience high-fidelity natural speech synthesis with smooth conversational flow.",
+  "United Arab Emirates": "Greetings! Enjoy natural, studio-quality neural speech with expressive pronunciation.",
   Canada: "Welcome! Experience realistic, human-quality voice synthesis with studio clarity.",
   Australia: "G'day! Here is a natural and authentic Australian voice that sounds just like a real person.",
-  Germany: "Hallo! Diese Stimme klingt vollkommen menschlich, fließend und natürlich.",
-  France: "Bonjour! Cette voix offre une intonation humaine, chaleureuse et parfaitement naturelle.",
-  "Türkiye": "Merhaba! Bu ses tıpkı gerçek bir insan gibi akıcı, sıcak ve doğaldır."
+  Germany: "Hello! This voice offers clear, authentic, and completely natural speech delivery.",
+  France: "Welcome! Enjoy warm, natural human intonation with high-fidelity clarity.",
+  "Türkiye": "Hello! This voice provides fluent, warm, and natural conversational speech."
 };
 
 export const Home: React.FC = () => {
-  const [text, setText] = useState(COUNTRY_SAMPLE_TEXTS["Pakistan"]);
+  const [text, setText] = useState(COUNTRY_SAMPLE_TEXTS["United States"]);
   const [voices, setVoices] = useState<Voice[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState("ur-PK-UzmaNeural");
+  const [selectedVoice, setSelectedVoice] = useState("en-US-AvaMultilingualNeural");
   const [isLoadingVoices, setIsLoadingVoices] = useState(true);
 
   // Prosody controls (0 = 100% natural human speed and pitch)
@@ -69,10 +70,10 @@ export const Home: React.FC = () => {
       const list = await getVoices();
       setVoices(list);
 
-      // Default to Pakistani Urdu natural voice if present
-      const defaultUrdu = list.find((v) => v.ShortName === "ur-PK-UzmaNeural" || v.ShortName === "ur-PK-AsadNeural");
-      if (defaultUrdu) {
-        setSelectedVoice(defaultUrdu.ShortName);
+      // Default to high-quality US natural voice or first available
+      const defaultVoice = list.find((v) => v.ShortName === "en-US-AvaMultilingualNeural" || v.ShortName === "en-US-AndrewMultilingualNeural");
+      if (defaultVoice) {
+        setSelectedVoice(defaultVoice.ShortName);
       } else if (list.length > 0) {
         setSelectedVoice(list[0].ShortName);
       }
@@ -115,7 +116,7 @@ export const Home: React.FC = () => {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) {
-      setErrorMessage("Please enter text to synthesize.");
+      setErrorMessage("Please enter text or script to synthesize.");
       return;
     }
 
@@ -136,7 +137,7 @@ export const Home: React.FC = () => {
       setCurrentFilename(response.filename);
       setCurrentSnippet(response.metadata.textSnippet);
       setCurrentVoiceName(response.metadata.voice);
-      setSuccessMessage("Audio synthesized successfully with 96kbps Studio Real-Human Engine!");
+      setSuccessMessage("Speech synthesized successfully with Studio HD Human Engine!");
 
       // Refresh history
       loadHistory();
@@ -156,6 +157,8 @@ export const Home: React.FC = () => {
     setSelectedVoice(item.voice);
   };
 
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {/* Header Banner */}
@@ -167,10 +170,10 @@ export const Home: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
-                Edge TTS Platform — Real Human Voices
+                Edge TTS Platform — UMAIR ASHIQ
               </h1>
               <p className="text-xs text-slate-400">
-                Select your country to filter authentic, human-grade neural voices with 96kbps studio fidelity
+                Fast, studio-grade neural speech synthesis with unlimited script support and authentic human clarity
               </p>
             </div>
           </div>
@@ -178,8 +181,8 @@ export const Home: React.FC = () => {
 
         <div className="flex items-center gap-2 text-xs">
           <span className="px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 font-medium flex items-center gap-1.5 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Studio 96kbps Active</span>
+            <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+            <span>Fast Turbo • Unlimited Script</span>
           </span>
           <span className="px-3 py-1.5 rounded-full bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 font-medium">
             {voices.length > 0 ? `${voices.length} Voices Online` : "Connecting..."}
@@ -218,7 +221,7 @@ export const Home: React.FC = () => {
               />
             </div>
 
-            {/* Text Input Section */}
+            {/* Script Text Input Section */}
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 space-y-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <label
@@ -226,20 +229,22 @@ export const Home: React.FC = () => {
                   className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"
                 >
                   <FileText className="w-4 h-4 text-indigo-400" />
-                  Speech Text (متن یہاں لکھیں)
+                  Speech Script / Text
                 </label>
-                <span className="text-[11px] font-mono text-slate-500">
-                  {text.length} characters
-                </span>
+                <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+                  <span>{wordCount} words</span>
+                  <span>•</span>
+                  <span>{text.length} characters</span>
+                </div>
               </div>
 
               <textarea
                 id="tts-text"
-                rows={4}
+                rows={6}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Type or paste the text you want to convert to speech..."
-                className="w-full p-4 bg-slate-950/70 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none font-sans"
+                placeholder="Type or paste your script here (supports unlimited words, long stories, and articles without limit)..."
+                className="w-full p-4 bg-slate-950/70 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors resize-y font-sans leading-relaxed"
               />
             </div>
 
@@ -263,12 +268,12 @@ export const Home: React.FC = () => {
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Synthesizing Studio Human Voice...</span>
+                  <span>Synthesizing Studio Human Speech (Fast Mode)...</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>Generate Real Human Voice (آواز بنائیں)</span>
+                  <span>Generate Studio Human Speech</span>
                 </>
               )}
             </button>
