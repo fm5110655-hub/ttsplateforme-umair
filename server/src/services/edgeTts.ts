@@ -82,7 +82,8 @@ class EdgeTtsService {
     const tts = new MsEdgeTTS();
 
     try {
-      await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+      // Use 96kbps 24kHz for studio clarity and natural human warmth (eliminates robotic artifacts)
+      await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
 
       // Normalize prosody parameters
       const formatRate = typeof rate === "number" ? `${rate >= 0 ? "+" : ""}${rate}%` : String(rate);

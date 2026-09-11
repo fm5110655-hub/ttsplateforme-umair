@@ -3,6 +3,7 @@ export interface Voice {
   ShortName: string;
   Gender: string;
   Locale: string;
+  LocaleName?: string;
   SuggestedCodec: string;
   FriendlyName: string;
   Status: string;

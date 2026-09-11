@@ -19,36 +19,27 @@ import { TtsConfigPanel } from "../components/TtsConfigPanel";
 import { AudioPlayer } from "../components/AudioPlayer";
 import { HistoryList } from "../components/HistoryList";
 
-const SAMPLE_PROMPTS = [
-  {
-    label: "English Narration",
-    voice: "en-US-AriaNeural",
-    text: "Welcome to our Edge TTS voice platform. This audio was synthesized using Microsoft Edge high-fidelity neural voices in real-time."
-  },
-  {
-    label: "Urdu Storytelling",
-    voice: "ur-PK-GulNeural",
-    text: "خوش آمدید! یہ آواز مائیکروسافٹ ایج کی نیورل ٹیکنالوجی کے ذریعے تیار کی گئی ہے۔"
-  },
-  {
-    label: "Tech Podcast",
-    voice: "en-US-GuyNeural",
-    text: "Artificial intelligence and neural text-to-speech are completely changing how humans interact with digital media and interactive agents."
-  },
-  {
-    label: "Hindi Announcement",
-    voice: "hi-IN-SwaraNeural",
-    text: "नमस्ते! इस मंच पर आपका स्वागत है। आप अपनी आवाज़ की गति और पिच को भी बदल सकते हैं।"
-  }
-];
+const COUNTRY_SAMPLE_TEXTS: Record<string, string> = {
+  Pakistan: "السلام علیکم! یہ آواز بالکل ایک حقیقی اور قدرتی انسان کی طرح بات کرتی ہے، جس میں کسی قسم کا مصنوعی یا روبوٹک انداز نہیں ہے۔",
+  "United States": "Hello! This voice sounds completely authentic and human-grade, with natural breathing pauses and conversational clarity.",
+  "United Kingdom": "Good day! This British accent provides warm, natural, human-like voice delivery without any robotic artifacts.",
+  India: "नमस्ते! यह आवाज़ बिल्कुल स्वाभाविक और असली इंसान जैसी सुनाई देती है, जिसमें कोई कृत्रिम या रोबोटिक प्रभाव नहीं है।",
+  "Saudi Arabia": "أهلاً وسهلاً! هذا الصوت يبدو طبيعياً وواقعياً تماماً كصوت بشري أصيل بجودة عالية.",
+  "United Arab Emirates": "مرحباً بكم! استمع إلى هذا الصوت الطبيعي الذي يحاكي النطق البشري بدقة ووضوح.",
+  Canada: "Welcome! Experience realistic, human-quality voice synthesis with studio clarity.",
+  Australia: "G'day! Here is a natural and authentic Australian voice that sounds just like a real person.",
+  Germany: "Hallo! Diese Stimme klingt vollkommen menschlich, fließend und natürlich.",
+  France: "Bonjour! Cette voix offre une intonation humaine, chaleureuse et parfaitement naturelle.",
+  "Türkiye": "Merhaba! Bu ses tıpkı gerçek bir insan gibi akıcı, sıcak ve doğaldır."
+};
 
 export const Home: React.FC = () => {
-  const [text, setText] = useState(SAMPLE_PROMPTS[0].text);
+  const [text, setText] = useState(COUNTRY_SAMPLE_TEXTS["Pakistan"]);
   const [voices, setVoices] = useState<Voice[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState("en-US-AriaNeural");
+  const [selectedVoice, setSelectedVoice] = useState("ur-PK-UzmaNeural");
   const [isLoadingVoices, setIsLoadingVoices] = useState(true);
 
-  // Prosody controls
+  // Prosody controls (0 = 100% natural human speed and pitch)
   const [rate, setRate] = useState(0);
   const [pitch, setPitch] = useState(0);
   const [volume, setVolume] = useState(0);
@@ -77,7 +68,12 @@ export const Home: React.FC = () => {
       setIsLoadingVoices(true);
       const list = await getVoices();
       setVoices(list);
-      if (list.length > 0 && !list.find((v) => v.ShortName === selectedVoice)) {
+
+      // Default to Pakistani Urdu natural voice if present
+      const defaultUrdu = list.find((v) => v.ShortName === "ur-PK-UzmaNeural" || v.ShortName === "ur-PK-AsadNeural");
+      if (defaultUrdu) {
+        setSelectedVoice(defaultUrdu.ShortName);
+      } else if (list.length > 0) {
         setSelectedVoice(list[0].ShortName);
       }
     } catch (err: any) {
@@ -93,7 +89,6 @@ export const Home: React.FC = () => {
       const hist = await getHistory();
       setHistory(hist);
       if (hist.length > 0 && !currentAudioUrl) {
-        // Pre-load latest audio into player
         setCurrentAudioUrl(hist[0].url);
         setCurrentFilename(hist[0].filename);
         setCurrentSnippet(hist[0].textSnippet);
@@ -101,6 +96,13 @@ export const Home: React.FC = () => {
       }
     } catch (err) {
       console.error("Failed to load history:", err);
+    }
+  };
+
+  const handleCountryChange = (countryName: string, defaultVoice: string) => {
+    setSelectedVoice(defaultVoice);
+    if (COUNTRY_SAMPLE_TEXTS[countryName]) {
+      setText(COUNTRY_SAMPLE_TEXTS[countryName]);
     }
   };
 
@@ -134,7 +136,7 @@ export const Home: React.FC = () => {
       setCurrentFilename(response.filename);
       setCurrentSnippet(response.metadata.textSnippet);
       setCurrentVoiceName(response.metadata.voice);
-      setSuccessMessage("Audio synthesized successfully!");
+      setSuccessMessage("Audio synthesized successfully with 96kbps Studio Real-Human Engine!");
 
       // Refresh history
       loadHistory();
@@ -160,23 +162,26 @@ export const Home: React.FC = () => {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800/80">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-lg shadow-indigo-500/20 text-white">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-500 shadow-lg shadow-indigo-500/20 text-white">
               <Volume2 className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
-                Edge TTS Platform
+                Edge TTS Platform — Real Human Voices
               </h1>
               <p className="text-xs text-slate-400">
-                Generate high-quality Microsoft Edge neural speech with real-time controls
+                Select your country to filter authentic, human-grade neural voices with 96kbps studio fidelity
               </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 font-medium flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span className="px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 font-medium flex items-center gap-1.5 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Studio 96kbps Active</span>
+          </span>
+          <span className="px-3 py-1.5 rounded-full bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 font-medium">
             {voices.length > 0 ? `${voices.length} Voices Online` : "Connecting..."}
           </span>
         </div>
@@ -199,9 +204,20 @@ export const Home: React.FC = () => {
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Input Form & Settings (7 cols) */}
+        {/* Left Column: Country/Voice Selection & Form (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           <form onSubmit={handleGenerate} className="space-y-5">
+            {/* Step 1 & 2: Country & Real Human Voice Selection */}
+            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 backdrop-blur-sm shadow-xl">
+              <VoiceSelector
+                voices={voices}
+                selectedVoice={selectedVoice}
+                onSelectVoice={setSelectedVoice}
+                isLoading={isLoadingVoices}
+                onCountryChange={handleCountryChange}
+              />
+            </div>
+
             {/* Text Input Section */}
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 space-y-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
@@ -210,7 +226,7 @@ export const Home: React.FC = () => {
                   className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"
                 >
                   <FileText className="w-4 h-4 text-indigo-400" />
-                  Speech Text
+                  Speech Text (متن یہاں لکھیں)
                 </label>
                 <span className="text-[11px] font-mono text-slate-500">
                   {text.length} characters
@@ -219,41 +235,11 @@ export const Home: React.FC = () => {
 
               <textarea
                 id="tts-text"
-                rows={5}
+                rows={4}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type or paste the text you want to convert to speech..."
                 className="w-full p-4 bg-slate-950/70 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none font-sans"
-              />
-
-              {/* Sample Prompts */}
-              <div className="pt-1">
-                <span className="text-[11px] text-slate-500 block mb-1.5">Try sample texts:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {SAMPLE_PROMPTS.map((sample, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setText(sample.text);
-                        setSelectedVoice(sample.voice);
-                      }}
-                      className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 border border-slate-700/60 hover:border-slate-600 transition-colors"
-                    >
-                      {sample.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Voice Selection */}
-            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-sm">
-              <VoiceSelector
-                voices={voices}
-                selectedVoice={selectedVoice}
-                onSelectVoice={setSelectedVoice}
-                isLoading={isLoadingVoices}
               />
             </div>
 
@@ -272,17 +258,17 @@ export const Home: React.FC = () => {
             <button
               type="submit"
               disabled={isGenerating || !text.trim()}
-              className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition-all shadow-xl shadow-indigo-600/25 flex items-center justify-center gap-2 active:scale-[0.99]"
+              className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-indigo-600 to-violet-600 hover:from-emerald-500 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition-all shadow-xl shadow-indigo-600/25 flex items-center justify-center gap-2 active:scale-[0.99]"
             >
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Synthesizing Audio via Edge-TTS...</span>
+                  <span>Synthesizing Studio Human Voice...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Generate Audio</span>
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>Generate Real Human Voice (آواز بنائیں)</span>
                 </>
               )}
             </button>
