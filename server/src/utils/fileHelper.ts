@@ -1,8 +1,21 @@
 import fs from "fs";
 import path from "path";
 
-// Resolves output directory relative to project root
-export const OUTPUT_DIR = path.resolve(__dirname, "../../../output");
+// In cloud environments (Railway, Render), use /tmp for ephemeral file writes
+// In development/local, use the project's output/ folder
+function resolveOutputDir(): string {
+  if (process.env.OUTPUT_DIR) {
+    return process.env.OUTPUT_DIR;
+  }
+  // On Railway (read-only filesystem), use /tmp
+  if (process.env.NODE_ENV === "production") {
+    return "/tmp/tts-output";
+  }
+  // Local development: project root output/ folder
+  return path.resolve(__dirname, "../../../output");
+}
+
+export const OUTPUT_DIR = resolveOutputDir();
 
 // Ensure directory exists
 export const ensureOutputDir = (): void => {
@@ -27,6 +40,7 @@ const METADATA_FILE = path.join(OUTPUT_DIR, "metadata.json");
 
 export const getHistoryMetadata = (): AudioMetadata[] => {
   try {
+    ensureOutputDir();
     if (!fs.existsSync(METADATA_FILE)) {
       return [];
     }
@@ -42,7 +56,6 @@ export const saveAudioMetadata = (entry: AudioMetadata): void => {
     ensureOutputDir();
     const list = getHistoryMetadata();
     list.unshift(entry);
-    // Keep last 50 entries
     const trimmed = list.slice(0, 50);
     fs.writeFileSync(METADATA_FILE, JSON.stringify(trimmed, null, 2), "utf-8");
   } catch (error) {

@@ -24,17 +24,15 @@ export interface SynthesisResult {
  */
 function sanitizeForSsml(text: string): string {
   return text
-    // Replace unescaped & with &amp;
     .replace(/&(?!(amp|lt|gt|quot|apos);)/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 }
 
 /**
- * Splits large scripts into manageable sentence chunks to support unlimited script length
- * without hitting WebSocket payload limits or timeout crashes.
+ * Splits large scripts into manageable sentence chunks for ultra-fast parallel synthesis
  */
-function splitIntoChunks(text: string, maxChunkLength = 700): string[] {
+function splitIntoChunks(text: string, maxChunkLength = 850): string[] {
   const trimmed = text.trim();
   if (trimmed.length <= maxChunkLength) {
     return [trimmed];
@@ -81,6 +79,30 @@ function splitIntoChunks(text: string, maxChunkLength = 700): string[] {
   return chunks.length > 0 ? chunks : [trimmed];
 }
 
+/**
+ * Executes async tasks concurrently with an exact concurrency limit while preserving result order
+ */
+async function runConcurrent<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const idx = nextIndex++;
+      results[idx] = await fn(items[idx], idx);
+    }
+  }
+
+  const workerCount = Math.min(limit, items.length);
+  const workers = Array.from({ length: workerCount }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
 class EdgeTtsService {
   private cachedVoices: Voice[] | null = null;
   private voicesLastFetched: number = 0;
@@ -118,7 +140,7 @@ class EdgeTtsService {
   }
 
   /**
-   * Synthesize single audio chunk with automatic retry & reconnection
+   * Synthesizes single audio chunk with automatic retry & fast cleanup
    */
   private async synthesizeChunk(
     voice: string,
@@ -154,8 +176,7 @@ class EdgeTtsService {
           console.error(`Chunk synthesis failed after ${maxRetries + 1} attempts:`, err);
           throw err;
         }
-        // Small backoff before retrying
-        await new Promise((r) => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, 150));
       }
     }
 
@@ -163,7 +184,7 @@ class EdgeTtsService {
   }
 
   /**
-   * Synthesize script of ANY length (unlimited characters) into high-fidelity studio MP3
+   * High-speed parallel synthesis for scripts of any length
    */
   async synthesize(options: SynthesisOptions): Promise<SynthesisResult> {
     const {
@@ -196,21 +217,21 @@ class EdgeTtsService {
       volume: formatVolume
     };
 
-    // Split text into safe chunks for unlimited length scripts
-    const chunks = splitIntoChunks(text);
-    const audioBuffers: Buffer[] = [];
+    // Split text into chunks
+    const chunks = splitIntoChunks(text, 850);
 
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkBuf = await this.synthesizeChunk(voice, chunks[i], prosody);
-      audioBuffers.push(chunkBuf);
-    }
+    // Run chunks concurrently (up to 4 parallel streams) for maximum speed
+    const CONCURRENCY_LIMIT = 4;
+    const audioBuffers = await runConcurrent(chunks, CONCURRENCY_LIMIT, async (chunk) => {
+      return this.synthesizeChunk(voice, chunk, prosody);
+    });
 
     const finalAudioBuffer = Buffer.concat(audioBuffers);
 
-    // Save to disk
+    // Write final merged MP3 directly to disk
     fs.writeFileSync(targetFilePath, finalAudioBuffer);
 
-    // Update output/audio.mp3
+    // Keep output/audio.mp3 updated
     try {
       fs.copyFileSync(targetFilePath, latestFilePath);
     } catch (copyErr) {
