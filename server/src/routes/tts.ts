@@ -61,22 +61,14 @@ router.get("/voices", async (_req: Request, res: Response): Promise<void> => {
 
 /**
  * GET /api/tts/history
- * List generated audio history
+ * Protected - history is stored privately on the client device
  */
 router.get("/history", (_req: Request, res: Response): void => {
-  try {
-    const history = getHistoryMetadata();
-    res.status(200).json({
-      success: true,
-      count: history.length,
-      history
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || "Failed to retrieve history."
-    });
-  }
+  res.status(200).json({
+    success: true,
+    count: 0,
+    history: []
+  });
 });
 
 export default router;

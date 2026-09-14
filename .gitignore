@@ -45,3 +45,4 @@ output/metadata.json
 *.sw?
 .DS_Store
 Thumbs.db
+cloudflared.exe

@@ -12,8 +12,7 @@ import {
   Voice,
   AudioMetadata,
   getVoices,
-  generateSpeech,
-  getHistory
+  generateSpeech
 } from "../api/ttsApi";
 import { VoiceSelector } from "../components/VoiceSelector";
 import { TtsConfigPanel } from "../components/TtsConfigPanel";
@@ -85,19 +84,29 @@ export const Home: React.FC = () => {
     }
   };
 
-  const loadHistory = async () => {
+  const loadHistory = () => {
     try {
-      const hist = await getHistory();
-      setHistory(hist);
-      if (hist.length > 0 && !currentAudioUrl) {
-        setCurrentAudioUrl(hist[0].url);
-        setCurrentFilename(hist[0].filename);
-        setCurrentSnippet(hist[0].textSnippet);
-        setCurrentVoiceName(hist[0].voice);
+      const stored = localStorage.getItem("umair_tts_private_history");
+      if (stored) {
+        const parsed: AudioMetadata[] = JSON.parse(stored);
+        setHistory(parsed);
+        if (parsed.length > 0 && !currentAudioUrl) {
+          setCurrentAudioUrl(parsed[0].url);
+          setCurrentFilename(parsed[0].filename);
+          setCurrentSnippet(parsed[0].textSnippet);
+          setCurrentVoiceName(parsed[0].voice);
+        }
+      } else {
+        setHistory([]);
       }
-    } catch (err) {
-      console.error("Failed to load history:", err);
+    } catch {
+      setHistory([]);
     }
+  };
+
+  const handleClearHistory = () => {
+    localStorage.removeItem("umair_tts_private_history");
+    setHistory([]);
   };
 
   const handleCountryChange = (countryName: string, defaultVoice: string) => {
@@ -139,8 +148,17 @@ export const Home: React.FC = () => {
       setCurrentVoiceName(response.metadata.voice);
       setSuccessMessage("Speech synthesized successfully with Studio HD Human Engine!");
 
-      // Refresh history
-      loadHistory();
+      // Save to private user history on this device only
+      try {
+        const newEntry = response.metadata;
+        const currentSaved = localStorage.getItem("umair_tts_private_history");
+        const list: AudioMetadata[] = currentSaved ? JSON.parse(currentSaved) : [];
+        const updated = [newEntry, ...list.filter((item) => item.filename !== newEntry.filename)].slice(0, 50);
+        localStorage.setItem("umair_tts_private_history", JSON.stringify(updated));
+        setHistory(updated);
+      } catch (e) {
+        console.error("Could not save private history:", e);
+      }
     } catch (err: any) {
       console.error("TTS generation error:", err);
       setErrorMessage(err.message || "Failed to generate speech. Please try again.");
@@ -300,6 +318,7 @@ export const Home: React.FC = () => {
             <HistoryList
               history={history}
               onSelectHistory={handleSelectHistoryItem}
+              onClearHistory={handleClearHistory}
               currentFilename={currentFilename}
             />
           </div>

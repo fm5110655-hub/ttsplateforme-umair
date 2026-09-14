@@ -1,23 +1,28 @@
 import React from "react";
-import { History, Play, Download, Clock } from "lucide-react";
+import { History, Play, Download, Clock, ShieldCheck, Trash2 } from "lucide-react";
 import { AudioMetadata } from "../api/ttsApi";
 
 interface HistoryListProps {
   history: AudioMetadata[];
   onSelectHistory: (item: AudioMetadata) => void;
+  onClearHistory?: () => void;
   currentFilename?: string;
 }
 
 export const HistoryList: React.FC<HistoryListProps> = ({
   history,
   onSelectHistory,
+  onClearHistory,
   currentFilename
 }) => {
   if (history.length === 0) {
     return (
       <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 text-center text-slate-500">
         <History className="w-6 h-6 mx-auto mb-2 opacity-50" />
-        <p className="text-xs">No generation history yet</p>
+        <p className="text-xs font-medium text-slate-400">No Generations Yet</p>
+        <p className="text-[11px] text-slate-500 mt-1">
+          Your generated audios are 100% private to your browser/device.
+        </p>
       </div>
     );
   }
@@ -39,10 +44,28 @@ export const HistoryList: React.FC<HistoryListProps> = ({
   return (
     <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5">
           <History className="w-4 h-4 text-indigo-400" />
-          Recent Generations ({history.length})
-        </h4>
+          <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            My Private Generations ({history.length})
+          </h4>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-emerald-400 flex items-center gap-1 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            <ShieldCheck className="w-3 h-3" />
+            <span>Private to you</span>
+          </span>
+          {onClearHistory && (
+            <button
+              type="button"
+              onClick={onClearHistory}
+              className="text-slate-500 hover:text-red-400 p-1 rounded transition-colors"
+              title="Clear my private history"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
