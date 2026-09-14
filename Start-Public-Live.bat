@@ -10,7 +10,7 @@ echo.
 start "" /b node server/dist/index.js
 timeout /t 2 /nobreak >nul
 
-echo Starting Cloudflare Public Global Tunnel...
+echo Starting Public Tunnel...
 start "" "d:\tts voice\cloudflared.exe" tunnel --url http://localhost:5000
 
 echo.
