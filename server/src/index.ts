@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 import ttsRouter from "./routes/tts";
 import { ensureOutputDir, OUTPUT_DIR } from "./utils/fileHelper";
 
@@ -46,16 +47,20 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-// === SERVE REACT FRONTEND IN PRODUCTION ===
-// In production (Railway/cloud), serve the built React app from client/dist
-if (NODE_ENV === "production") {
-  const clientBuildPath = path.resolve(__dirname, "../../client/dist");
-
-  // Serve React static assets (JS, CSS, images)
+// === SERVE REACT FRONTEND ===
+// Serve the built React SPA from client/dist if present
+const clientBuildPath = path.resolve(__dirname, "../../client/dist");
+if (fs.existsSync(clientBuildPath)) {
+  console.log(`[TTS Server] Serving React frontend from ${clientBuildPath}`);
   app.use(express.static(clientBuildPath));
 
-  // For any non-API route, serve index.html (SPA routing support)
-  app.get("*", (_req, res) => {
+  // For any non-API route, serve index.html (SPA client routing)
+  app.get("*", (req, res) => {
+    // Avoid intercepting audio or api requests that 404
+    if (req.path.startsWith("/api") || req.path.startsWith("/audio")) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
     res.sendFile(path.join(clientBuildPath, "index.html"));
   });
 }
@@ -65,7 +70,4 @@ app.listen(PORT, () => {
   console.log(`[TTS Server] Running at http://localhost:${PORT}`);
   console.log(`[TTS Server] Mode: ${NODE_ENV}`);
   console.log(`[TTS Server] Audio files served at /audio/`);
-  if (NODE_ENV === "production") {
-    console.log(`[TTS Server] Serving React frontend from client/dist`);
-  }
 });

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: umairashiqtoolvoiceover
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OUTPUT_DIR
+        value: /tmp/tts-output
