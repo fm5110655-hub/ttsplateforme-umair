@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: umairashiqtoolvoiceover
+    name: umairashiqtts
     runtime: node
     plan: free
     buildCommand: npm run build
