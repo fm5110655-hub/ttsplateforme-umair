@@ -16,6 +16,7 @@ export interface SynthesisResult {
   filename: string;
   audioUrl: string;
   latestAudioUrl: string;
+  audioBase64?: string;
   metadata: AudioMetadata;
 }
 
@@ -238,9 +239,11 @@ class EdgeTtsService {
       console.warn("Could not update latest audio.mp3:", copyErr);
     }
 
+    const audioBase64 = `data:audio/mp3;base64,${finalAudioBuffer.toString("base64")}`;
+
     const metadata: AudioMetadata = {
       filename,
-      url: `/audio/${filename}`,
+      url: audioBase64,
       textSnippet: text.length > 80 ? `${text.slice(0, 77)}...` : text,
       voice,
       rate: formatRate,
@@ -255,8 +258,9 @@ class EdgeTtsService {
     return {
       success: true,
       filename,
-      audioUrl: `/audio/${filename}`,
+      audioUrl: audioBase64,
       latestAudioUrl: `/audio/audio.mp3`,
+      audioBase64,
       metadata
     };
   }

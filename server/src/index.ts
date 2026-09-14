@@ -65,9 +65,13 @@ if (fs.existsSync(clientBuildPath)) {
   });
 }
 
-// Start listening
-app.listen(PORT, () => {
-  console.log(`[TTS Server] Running at http://localhost:${PORT}`);
-  console.log(`[TTS Server] Mode: ${NODE_ENV}`);
-  console.log(`[TTS Server] Audio files served at /audio/`);
-});
+// Start listening if not in Vercel serverless environment
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`[TTS Server] Running at http://localhost:${PORT}`);
+    console.log(`[TTS Server] Mode: ${NODE_ENV}`);
+    console.log(`[TTS Server] Audio files served at /audio/`);
+  });
+}
+
+export default app;
